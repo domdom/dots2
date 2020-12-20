@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# Get stowsh dependency for bash based stow
+git submodule update --init -- $BASEDIR/pkgs/stowsh
+
+install() {
+    $BASEDIR/pkgs/stowsh/bin/stowsh --dot-prefix -t "$HOME" "$BASEDIR/configs/$1"
+}
+
+case "$1" in
+    darwin)
+        install common
+        install darwin
+        ;;
+esac
+
+
+
