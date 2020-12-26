@@ -1,0 +1,82 @@
+# bootstrap the plugin manager
+nop %sh{
+    plugins="$HOME/.config/kak/plugins"
+    mkdir -p $plugins
+    [ ! -e "$plugins/plug.kak" ] && git clone -q https://github.com/robertmeta/plug.kak.git "$plugins/plug.kak"
+}
+source "%val{config}/plugins/plug.kak/rc/plug.kak"
+
+#####################################################
+# Plugins
+#####################################################
+
+# This has a bug
+plug "robertmeta/plug.kak"
+
+plug "andreyorst/smarttab.kak" config %{
+    set-option global softtabstop 4
+    set-option global tabstop 4
+    hook global WinSetOption filetype=(.*) expandtab
+    hook global WinSetOption filetype=(makefile|gas) noexpandtab
+}
+
+plug "evanrelf/primer.kak" config %{
+    colorscheme primer
+}
+
+plug "insipx/kak-crosshairs" config %{
+    cursorline
+    set-face global crosshairs_line default,rgb:eeeeee
+    set-face global crosshairs_column default,rgb:eeeeee
+}
+
+# Required by connect.kak
+plug "alexherbo2/prelude.kak"
+plug "alexherbo2/connect.kak" config %{
+    require-module connect-fzf
+    set-option global connect_environment %{
+        source /nix/var/nix/profiles/default/etc/profile.d/nix.sh
+    }
+}
+
+hook global RegisterModified '"' %{ nop %sh{
+    printf %s "$kak_main_reg_dquote" | to_clipboard
+}}
+
+#map global normal p '<a-O>kp'
+map global user s ': source "%val{config}/kakrc"<ret>'
+
+
+# TODO:
+# - add fzf plugins
+# - add better cpp-highlight features
+# - add kak-lsp
+# - add undo file support
+
+
+#####################################################
+# Configuration
+#####################################################
+
+# Adds number lines
+add-highlighter global/ number-lines
+
+# TODO:
+# - scrollOff lines
+# - highlight cursor line number
+# - disable auto comment continue
+# - add highlighter for llvm IR
+# - add highlighter for groovy
+
+#####################################################
+# Keyboard mapping
+#####################################################
+# <backspace> is the same as <c-h>, but my terminal turns <c-h> into <backspace>
+map global normal <backspace> ': bp<ret>'
+map global normal <c-l> ': bn<ret>'
+
+map global normal <c-p> ': fzf-files<ret>'
+map global normal <c-e> ': fzf-buffers<ret>'
+
+
+

@@ -2,19 +2,11 @@
 
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-# Get stowsh dependency for bash based stow
-git submodule update --init -- $BASEDIR/pkgs/stowsh
+STOWSH=$HOME/.local/bin/stowsh
+if [ ! -e "$STOWSH" ]; then
+    mkdir $(dirname $STOWSH)
+    curl -L https://raw.githubusercontent.com/domdom/stowsh/master/bin/stowsh > $STOWSH
+    chmod +x $STOWSH
+fi
 
-install() {
-    $BASEDIR/pkgs/stowsh/bin/stowsh --dot-prefix -t "$HOME" -R "$BASEDIR/configs/$1"
-}
-
-case "$1" in
-    darwin)
-        install common
-        install darwin
-        ;;
-esac
-
-
-
+$STOWSH --dot-prefix -t "$HOME" "$@" "$BASEDIR/configuration"
