@@ -2,11 +2,7 @@
 
 BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-STOWSH=$HOME/.local/bin/stowsh
-if [ ! -e "$STOWSH" ]; then
-    mkdir $(dirname $STOWSH)
-    curl -L https://raw.githubusercontent.com/domdom/stowsh/master/bin/stowsh > $STOWSH
-    chmod +x $STOWSH
-fi
+git submodule init -- ${BASEDIR}/pkgs/stowsh
+STOWSH=${BASEDIR}/pkgs/stowsh/bin/stowsh
 
 $STOWSH --dot-prefix -t "$HOME" "$@" "$BASEDIR/configuration"
