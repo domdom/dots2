@@ -1,3 +1,6 @@
 [submodule "pkgs/stowsh"]
 	path = pkgs/stowsh/stowsh
 	url = git@github.com:domdom/stowsh
+[submodule "pkgs/dwm/dwm"]
+	path = pkgs/dwm/dwm
+	url = https://git.suckless.org/dwm
