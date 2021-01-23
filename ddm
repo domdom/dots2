@@ -1,0 +1,291 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Special locations:
+#  ~/.config/tags/*    regular files indication which tags to install
+#  ~/.config/deps/*    regular files indicating the dependencies to install
+#  ~/.config/ddm/host -> ~/dotfiles/hosts/my-host symlink storing last installed host
+
+UI_TICK="$(tput setaf 2)✓$(tput sgr0)"
+UI_CROSS="$(tput setaf 1)✕$(tput sgr0)"
+
+LOG_LEVEL=1
+
+DRY_RUN=false
+
+TAG_DIR=${XGD_CONFIG_DIR:-$HOME/.config}/tags
+DEP_DIR=${XGD_CONFIG_DIR:-$HOME/.config}/deps
+
+HOST_LINK=${XGD_CONFIG_DIR:-$HOME/.config}/ddm/host
+
+############################################## ddm
+
+main () {
+    local op=up
+
+    while (( $# > 0 )); do
+        case "$1" in
+            -v) LOG_LEVEL=2; shift; ;;
+            -n) DRY_RUN=true; shift; ;;
+            dn) op="dn"; shift; ;;
+            up) op="up"; shift; ;;
+            *) break; ;;
+        esac
+    done
+
+    # Calculate fallback host
+    local fallbackHost=$(get_linked "$HOST_LINK")
+
+    local host="${1:-$fallbackHost}"
+
+    if (( $# > 1 )); then
+        error "Cannot accept more than one host directory"
+        exit 1
+    fi
+    if [ -z "$host" ]; then
+        error "You must specify a host on the first run"
+        exit 1
+    fi
+
+    if [ ! -z "$fallbackHost" ]; then
+        if ! is_same "$host" "$fallbackHost"; then
+            if [ "$op" == "dn" ]; then
+                error "Host $host, is not installed right now. $fallbackHost is."
+                exit 1
+            fi
+
+            ddm dn "$fallbackHost"
+        fi
+    fi
+
+    ddm "$op" "$host"
+}
+
+ddm () {
+    local op=$1
+    local host=$2
+
+    local hostLinkDir=$(dirname "$HOST_LINK")
+
+    local tag_dir="$host/../../tags"
+
+    local old_tags=$(get_tags)
+
+
+    if [ "$op" = up ]; then
+        $DRY_RUN || rm "$HOST_LINK"
+        $DRY_RUN || mkdir -p "$hostLinkDir"
+        $DRY_RUN || ln -s "$(relpath "$host" "$hostLinkDir")" "$HOST_LINK"
+        verbose "host $(basename $host) $UI_TICK"
+    else
+        $DRY_RUN || rm "$HOST_LINK"
+        verbose "host $(basename $host) $UI_CROSS"
+    fi
+    
+    sync_$op "$host" "$HOME"
+    sync_tags "$tag_dir" "$old_tags"
+}
+
+
+# Get the current tags present in $TAG_DIR
+# TODO: Allow duplicate tags somehow
+get_tags() {
+    ls "$TAG_DIR" | sort -u
+}
+
+# computes fixed point for tags
+sync_tags() {
+    local tag_dir="$1"
+    local tags1="$2"
+    local tags2=$(get_tags)
+
+    local added=$(comm -1 <(echo "$tags1") <(echo "$tags2"))
+    local removed=$(comm -23 <(echo "$tags1") <(echo "$tags2"))
+
+    for tag in $removed; do
+        verbose "tag $tag $UI_CROSS "
+        sync_dn "$tag_dir/$tag" "$HOME"
+    done
+
+    for tag in $added; do
+        verbose "tag $tag $UI_TICK"
+        sync_up "$tag_dir/$tag" "$HOME"
+    done
+
+    if [ "$tags1" = "$tags2" ]; then
+        return
+    fi
+    sync_tags "$tag_dir" "$tags2"
+}
+
+sync_deps() {
+    # This will be a bit more complicated. We will be keeping track of which
+    # dependencies we have already installed
+    :
+}
+
+
+############################################## SYNC
+# This function implements the dot-file stowing
+
+sync_up () {
+    local pkgDir=$1
+    local dstDir=$2
+    # for each file in pkgDir
+    find "$pkgDir" -not -type d -print0 | \
+        while IFS= read -r -d '' pkgFile; do
+
+            local destFile=$(get_dest_path "$pkgDir" "$dstDir" "$pkgFile")
+            local destFileDir=$(dirname "$destFile")
+
+            local maybePkgFile=$(get_linked "$destFile")
+
+            debug "pkgFile = $pkgFile"
+            debug "destFile = $destFile"
+            debug "maybePkgFile = $maybePkgFile"
+
+            if is_same "$pkgFile" "$maybePkgFile"; then
+                print_stow "$destFile"
+                continue
+            fi
+
+            if dir_contains "$pkgDir" "$maybePkgFile"; then
+                debug "rm $destFile"
+                $DRY_RUN || rm "$destFile"
+            fi
+
+            if [ -e "$maybePkgFile" ]; then
+                error "Error: '$destFile' already exists ('$maybePkgFile') but is not owned by us."
+                exit 1
+            fi
+
+            debug "mkdir $destFileDir"
+            $DRY_RUN || mkdir -p "$destFileDir"
+
+            local relPath=$(relpath "$pkgFile" "$destFileDir")
+
+            print_stow "$destFile"
+            $DRY_RUN || ln -s "$relPath" "$destFile"
+        done
+}
+
+sync_dn () {
+    local pkgDir=$1
+    local dstDir=$2
+    # for each file in pkgDir
+    find "$pkgDir" -not -type d -print0 | \
+        while IFS= read -r -d '' pkgFile; do
+
+            local destFile=$(get_dest_path "$pkgDir" "$dstDir" "$pkgFile")
+            local destFileDir=$(dirname "$destFile")
+
+            local maybePkgFile=$(get_linked "$destFile")
+
+            if dir_contains "$pkgDir" "$maybePkgFile"; then
+                print_unstow "$destFile"
+                $DRY_RUN || rm "$destFile"
+            fi
+
+            # TODO: remove empty directories
+            # TODO: remove dead siblings
+        done
+}
+
+# Get what should be the destination path for a pkgFile
+get_dest_path () {
+    local pkgDir=$1
+    local dstDir=$2
+    local pkgFile=$3
+
+    local destFile=$(relpath "$pkgFile" "$pkgDir")
+    echo "$dstDir/.$destFile"
+}
+
+# Reads a symbolic link
+get_linked () {
+    local destFile=$1
+
+    if [ -L "$destFile" ]; then
+        join "$(dirname "$destFile")" "$(readlink "$destFile")"
+    else
+        echo ""
+    fi
+}
+
+dir_contains () {
+    local dir=$1
+    local file=$2
+
+    while :; do
+        [ -z "$file" ] && return 1
+        is_same "$dir" "$file" && return 0
+
+        [ "$file" = "." -o "$file" = "/" ] && return 1
+
+        file=$(dirname "$file")
+    done
+}
+
+#### Utils
+get_fileid() {
+    local system=$(uname -s)
+    case "$system" in
+        Darwin) stat -f%d:%i "$1" 2> /dev/null || return 1; ;;
+        Linux)  stat -c%d:%i "$1" 2> /dev/null || return 1; ;;
+    esac
+}
+
+# Compares two paths by checking the file inode
+is_same() {
+    local a=$(get_fileid "$1")
+    local b=$(get_fileid "$2")
+
+    [ -z "$a" ] && return 1
+    [ -z "$b" ] && return 1
+
+    [ "$a" = "$b" ]
+}
+
+# join two paths together. If the second part is an absolute path, it will
+# replace the result with that
+join () {
+    local a=$1
+    local b=$2
+    if [ ${b::1} = "/" ] ; then
+        echo $b;
+    else 
+        echo "${a%/}/$b";
+    fi
+}
+
+
+# TODO: This is a compatibility hack for macos (which doesn't have realpath
+# --relative-to), find a pure bash way?
+relpath () {
+    python -c 'import os, sys; print(os.path.relpath(*sys.argv[1:]))' "$1" "$2"
+}
+
+print_stow () {
+    verbose " $UI_TICK ~/$(relpath "$1" "$HOME")"
+}
+print_unstow () {
+    verbose " $UI_CROSS ~/$(relpath "$1" "$HOME")"
+}
+
+error () {
+    echo "$@" >&2
+}
+
+verbose () {
+    if [ "$LOG_LEVEL" -ge 1 ]; then
+        echo "$@" >&2;
+    fi
+}
+
+debug () {
+    if [ "$LOG_LEVEL" -ge 2 ]; then
+        echo "$@" >&2;
+    fi
+}
+
+main "$@"
