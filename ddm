@@ -65,15 +65,12 @@ ddm () {
     local op=$1
     local host=$2
 
-    local hostLinkDir=$(dirname "$HOST_LINK")
-
     local tag_dir="$host/../../tags"
 
     local old_tags=$(get_tags)
-
-
     if [ "$op" = up ]; then
-        $DRY_RUN || rm "$HOST_LINK"
+        local hostLinkDir=$(dirname "$HOST_LINK")
+        $DRY_RUN || [ ! -e "$HOST_LINK" ] || rm "$HOST_LINK"
         $DRY_RUN || mkdir -p "$hostLinkDir"
         $DRY_RUN || ln -s "$(relpath "$host" "$hostLinkDir")" "$HOST_LINK"
         verbose "host $(basename $host) $UI_TICK"
