@@ -1,0 +1,23 @@
+#!/bin/sh
+# This is inspired by OSX's /usr/libexec/path_helper
+# It iterates over all files in ~/.config/paths.d/ and outputs something
+# that can be evaled by any shell to modify the PATH
+#
+# usage: eval (path-helper fish)
+# usage: eval $(path-helper bash)
+
+# the default language is sh
+lang=${1-sh}
+
+set - ~/.config/paths.d/*
+[ -e "$1" ] || shift
+
+for path_file in "$@"; do
+    # We want $ to remain unexpanded
+    # shellcheck disable=SC2016
+    case "$lang" in
+        sh|bash|dash|zsh) sed -e 's/^.*$/export PATH=&:"$PATH"/' "$path_file"; ;;
+        fish) 	          sed -e 's/^.*$/set -g PATH "&" $PATH/' "$path_file"; ;;
+    esac
+done
+
