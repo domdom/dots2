@@ -65,9 +65,6 @@ ddm () {
     local op=$1
     local host=$2
 
-    local tag_dir="$host/../../tags"
-
-    local old_tags=$(get_tags)
     if [ "$op" = up ]; then
         local hostLinkDir=$(dirname "$HOST_LINK")
         $DRY_RUN || [ ! -e "$HOST_LINK" ] || rm "$HOST_LINK"
@@ -79,29 +76,48 @@ ddm () {
         verbose "host $(basename $host) $UI_CROSS"
     fi
     
+    local tag_dir="$host/../../tags"
+    local old_tags=$(get_tags)
     sync_$op "$host" "$HOME"
-    sync_tags "$tag_dir" "$old_tags"
+    sync_tags "$tag_dir" "$(get_tags_removed "$old_tags")"
 }
 
 
 # Get the current tags present in $TAG_DIR
 # TODO: Allow duplicate tags somehow
 get_tags() {
-    ls "$TAG_DIR" | sort -u
+    find "$TAG_DIR" -not -type d -exec test -e {} \; -print | xargs -I{} basename {} | sort -u
+}
+
+get_tags_removed() {
+    {
+        comm -23 <(echo "$1") <(get_tags)
+        find "$TAG_DIR" -type l -exec test ! -e {} \; -print | xargs -I{} basename {}
+    } | sort -u
+}
+
+get_tags_added() {
+    comm -13 <(echo "$1") <(get_tags)
 }
 
 # computes fixed point for tags
 sync_tags() {
     local tag_dir="$1"
-    local tags1="$2"
-    local tags2=$(get_tags)
+    local old_tags="$2"
+    local current_tags=$(get_tags)
 
-    local added=$(comm -1 <(echo "$tags1") <(echo "$tags2"))
-    local removed=$(comm -23 <(echo "$tags1") <(echo "$tags2"))
+    debug "$current_tags"
+
+    local added=$(get_tags_added "$old_tags")
+    local removed=$(get_tags_removed "$old_tags")
 
     for tag in $removed; do
         verbose "tag $tag $UI_CROSS "
         sync_dn "$tag_dir/$tag" "$HOME"
+        if [ -L "$TAG_DIR/$tag" ]; then
+            debug "rm $TAG_DIR/$tag"
+            $DRY_RUN || rm "$TAG_DIR/$tag"
+        fi
     done
 
     for tag in $added; do
@@ -109,10 +125,10 @@ sync_tags() {
         sync_up "$tag_dir/$tag" "$HOME"
     done
 
-    if [ "$tags1" = "$tags2" ]; then
+    if [ "$old_tags" = "$current_tags" ]; then
         return
     fi
-    sync_tags "$tag_dir" "$tags2"
+    sync_tags "$tag_dir" "$current_tags"
 }
 
 sync_deps() {
@@ -131,7 +147,6 @@ sync_up () {
     # for each file in pkgDir
     find "$pkgDir" -not -type d -print0 | \
         while IFS= read -r -d '' pkgFile; do
-
             local destFile=$(get_dest_path "$pkgDir" "$dstDir" "$pkgFile")
             local destFileDir=$(dirname "$destFile")
 
