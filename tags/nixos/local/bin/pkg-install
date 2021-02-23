@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+pkg=$1
+
+nix-env -iA nixos."$pkg"
