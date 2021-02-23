@@ -13,10 +13,10 @@ LOG_LEVEL=1
 
 DRY_RUN=false
 
-TAG_DIR=${XGD_CONFIG_DIR:-$HOME/.config}/tags
-DEP_DIR=${XGD_CONFIG_DIR:-$HOME/.config}/deps
+CFG_TAG_DIR=${XGD_CONFIG_DIR:-$HOME/.config}/tags
+CFG_DEP_DIR=${XGD_CONFIG_DIR:-$HOME/.config}/deps
 
-HOST_LINK=${XGD_CONFIG_DIR:-$HOME/.config}/ddm/host
+CFG_HOST_LINK=${XGD_CONFIG_DIR:-$HOME/.config}/ddm/host
 
 ############################################## ddm
 
@@ -34,7 +34,7 @@ main () {
     done
 
     # Calculate fallback host
-    local fallbackHost=$(get_linked "$HOST_LINK")
+    local fallbackHost=$(get_linked "$CFG_HOST_LINK")
 
     local host="${1:-$fallbackHost}"
 
@@ -66,33 +66,34 @@ ddm () {
     local host=$2
 
     if [ "$op" = up ]; then
-        local hostLinkDir=$(dirname "$HOST_LINK")
-        $DRY_RUN || [ ! -e "$HOST_LINK" ] || rm "$HOST_LINK"
+        local hostLinkDir=$(dirname "$CFG_HOST_LINK")
+        $DRY_RUN || [ ! -e "$CFG_HOST_LINK" ] || rm "$CFG_HOST_LINK"
         $DRY_RUN || mkdir -p "$hostLinkDir"
-        $DRY_RUN || ln -s "$(relpath "$host" "$hostLinkDir")" "$HOST_LINK"
+        $DRY_RUN || ln -s "$(relpath "$host" "$hostLinkDir")" "$CFG_HOST_LINK"
         verbose "host $(basename $host) $UI_TICK"
     else
-        $DRY_RUN || rm "$HOST_LINK"
+        $DRY_RUN || rm "$CFG_HOST_LINK"
         verbose "host $(basename $host) $UI_CROSS"
     fi
-    
+
     local tag_dir="$host/../../tags"
     local old_tags=$(get_tags)
     sync_$op "$host" "$HOME"
     sync_tags "$tag_dir" "$(get_tags_removed "$old_tags")"
 }
 
+#################################################
 
-# Get the current tags present in $TAG_DIR
+# Get the current tags present in $CFG_TAG_DIR
 # TODO: Allow duplicate tags somehow
 get_tags() {
-    find "$TAG_DIR" -not -type d -exec test -e {} \; -print | xargs -I{} basename {} | sort -u
+    find "$CFG_TAG_DIR" -not -type d -exec test -e {} \; -print | xargs -I{} basename {} | sort -u
 }
 
 get_tags_removed() {
     {
         comm -23 <(echo "$1") <(get_tags)
-        find "$TAG_DIR" -type l -exec test ! -e {} \; -print | xargs -I{} basename {}
+        find "$CFG_TAG_DIR" -type l -exec test ! -e {} \; -print | xargs -I{} basename {}
     } | sort -u
 }
 
@@ -114,9 +115,9 @@ sync_tags() {
     for tag in $removed; do
         verbose "tag $tag $UI_CROSS "
         sync_dn "$tag_dir/$tag" "$HOME"
-        if [ -L "$TAG_DIR/$tag" ]; then
-            debug "rm $TAG_DIR/$tag"
-            $DRY_RUN || rm "$TAG_DIR/$tag"
+        if [ -L "$CFG_TAG_DIR/$tag" ]; then
+            debug "rm $CFG_TAG_DIR/$tag"
+            $DRY_RUN || rm "$CFG_TAG_DIR/$tag"
         fi
     done
 
