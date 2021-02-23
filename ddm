@@ -157,13 +157,13 @@ sync_deps() {
     local current_deps=$(get_deps)
     local installed_deps=$(get_deps_installed)
 
-    comm -23 <(echo -n "$current_deps") <(echo -n "$installed_deps") | \
+    comm -23 <(echo "$current_deps") <(echo "$installed_deps") | \
         while read -r dep; do
             verbose "pkg $dep $UI_TICK "
             $DRY_RUN || pkg-install "$dep" && touch "$CFG_DEP_DIR/$dep.installed"
         done
 
-    comm -13 <(echo -n "$current_deps") <(echo -n "$installed_deps") | \
+    comm -13 <(echo "$current_deps") <(echo "$installed_deps") | \
         while read -r dep; do
             verbose "pkg $dep $UI_CROSS "
             $DRY_RUN || pkg-remove "$dep" && rm "$CFG_DEP_DIR/$dep.installed"
