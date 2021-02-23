@@ -80,6 +80,11 @@ ddm () {
     local old_tags=$(get_tags)
     sync_$op "$host" "$HOME"
     sync_tags "$tag_dir" "$(get_tags_removed "$old_tags")"
+
+    # After all the tags are installed, we then try installing all the
+    # depenedncies
+    # TODO: fallback if we don't have pkg-install and pkg-remove
+    sync_deps
 }
 
 #################################################
@@ -131,10 +136,38 @@ sync_tags() {
     sync_tags "$tag_dir" "$current_tags"
 }
 
+#################################################
+
+get_deps() {
+    find "$CFG_DEP_DIR" -not -name \*.installed -not -type d -exec test -e {} \; -print \
+        | xargs -I{} basename {} \
+        | sort -u
+}
+
+get_deps_installed() {
+    find "$CFG_DEP_DIR"      -name \*.installed -not -type d -exec test -e {} \; -print \
+        | xargs -I{} basename {} \
+        | sed -e 's/\.installed$//' \
+        | sort -u
+}
+
 sync_deps() {
     # This will be a bit more complicated. We will be keeping track of which
     # dependencies we have already installed
-    :
+    local current_deps=$(get_deps)
+    local installed_deps=$(get_deps_installed)
+
+    comm -23 <(echo -n "$current_deps") <(echo -n "$installed_deps") | \
+        while read -r dep; do
+            verbose "pkg $dep $UI_TICK "
+            $DRY_RUN || pkg-install "$dep" && touch "$CFG_DEP_DIR/$dep.installed"
+        done
+
+    comm -13 <(echo -n "$current_deps") <(echo -n "$installed_deps") | \
+        while read -r dep; do
+            verbose "pkg $dep $UI_CROSS "
+            $DRY_RUN || pkg-remove "$dep" && rm "$CFG_DEP_DIR/$dep.installed"
+        done
 }
 
 
