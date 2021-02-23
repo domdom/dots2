@@ -34,14 +34,6 @@
 [absorb]
   maxStack = 200
 
-[delta]
-  light = true
-  syntax-theme = "Github"
-
-[core]
-  pager = "delta"
-
-[interactive]
-  diffFilter = "delta --color-only"
-
-
+; Includes delta configuration, since it breaks git if it's not installed
+[include]
+ path = "~/.config/git/config-delta"
