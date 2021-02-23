@@ -107,9 +107,6 @@ sync_tags() {
     local old_tags="$2"
     local current_tags=$(get_tags)
 
-    debug "$current_tags"
-
-    local added=$(get_tags_added "$old_tags")
     local removed=$(get_tags_removed "$old_tags")
 
     for tag in $removed; do
@@ -120,6 +117,8 @@ sync_tags() {
             $DRY_RUN || rm "$CFG_TAG_DIR/$tag"
         fi
     done
+
+    local added=$(get_tags_added "$old_tags")
 
     for tag in $added; do
         verbose "tag $tag $UI_TICK"
