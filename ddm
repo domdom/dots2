@@ -272,9 +272,9 @@ dir_contains () {
 }
 
 #### Utils
+SYSTEM=$(uname -s)
 get_fileid() {
-    local system=$(uname -s)
-    case "$system" in
+    case "$SYSTEM" in
         Darwin) stat -f%d:%i "$1" 2> /dev/null || return 1; ;;
         Linux)  stat -c%d:%i "$1" 2> /dev/null || return 1; ;;
     esac
