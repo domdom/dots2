@@ -1,3 +1,8 @@
 #!/usr/bin/env bash
 
-brew install "$@"
+case "$1" in
+    delta)  pkg=git-delta; ;;
+    *)      pkg=$1; ;;
+esac
+
+brew list "$pkg" || brew install "$pkg"
