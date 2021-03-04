@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+case "$1" in
+    delta)  echo git-delta; ;;
+    *)      echo $1; ;;
+esac
+

@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-case "$1" in
-    delta)  pkg=git-delta; ;;
-    *)      pkg=$1; ;;
-esac
+pkg=$(pkg-map "$1")
 
-brew list "$pkg" || brew install "$pkg"
+brew list "$pkg" 2>/dev/null || brew install "$pkg"
