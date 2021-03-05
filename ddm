@@ -84,13 +84,14 @@ ddm () {
     # After all the tags are installed, we then try installing all the
     # depenedncies
     # TODO: fallback if we don't have pkg-install and pkg-remove
+    # TODO: use hooks for tags and dependencies?
     sync_deps
 }
 
 #################################################
 
 # Get the current tags present in $CFG_TAG_DIR
-# TODO: Allow duplicate tags somehow
+# TODO: Allow duplicate tags somehow, or mandate tags do it themselves?
 get_tags() {
     find "$CFG_TAG_DIR" -not -type d -exec test -e {} \; -print | xargs -I{} basename {} | sort -u
 }
@@ -159,12 +160,14 @@ sync_deps() {
 
     comm -23 <(echo "$current_deps") <(echo "$installed_deps") | \
         while read -r dep; do
+            [ -z "$dep" ] && continue
             verbose "pkg $dep $UI_TICK "
             $DRY_RUN || pkg-install "$dep" && touch "$CFG_DEP_DIR/$dep.installed"
         done
 
     comm -13 <(echo "$current_deps") <(echo "$installed_deps") | \
         while read -r dep; do
+            [ -z "$dep" ] && continue
             verbose "pkg $dep $UI_CROSS "
             $DRY_RUN || pkg-remove "$dep" && rm "$CFG_DEP_DIR/$dep.installed"
         done
@@ -217,6 +220,11 @@ sync_up () {
 sync_dn () {
     local pkgDir=$1
     local dstDir=$2
+
+    # Store the package's local/bin in the path, so that binaries related to
+    # installing packages are still on the path when we go to remove
+    # dependencies.
+    PATH=$pkgDir/local/bin:$PATH
     # for each file in pkgDir
     find "$pkgDir" -not -type d -print0 | \
         while IFS= read -r -d '' pkgFile; do
@@ -242,7 +250,9 @@ get_dest_path () {
     local dstDir=$2
     local pkgFile=$3
 
-    local destFile=$(relpath "$pkgFile" "$pkgDir")
+    # Using parameter substitution here is much faster than using 'relpath' but
+    # should be safe give how we use find to find all files in pkgDir
+    local destFile=${pkgFile#$pkgDir/}
     echo "$dstDir/.$destFile"
 }
 
@@ -311,10 +321,10 @@ relpath () {
 }
 
 print_stow () {
-    verbose " $UI_TICK ~/$(relpath "$1" "$HOME")"
+    verbose " $UI_TICK ~/${1#$HOME/}"
 }
 print_unstow () {
-    verbose " $UI_CROSS ~/$(relpath "$1" "$HOME")"
+    verbose " $UI_CROSS ~/${1#$HOME/}"
 }
 
 error () {
