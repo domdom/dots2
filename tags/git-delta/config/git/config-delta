@@ -1,6 +1,7 @@
 [delta]
   light = true
   syntax-theme = "Github"
+  features = line-numbers
 
 [core]
   pager = "delta"
