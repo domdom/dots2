@@ -1,0 +1,7 @@
+#!/bin/sh
+git rev-parse HEAD > /dev/null 2>&1 || exit 1
+
+git -c color.ui=always status --short \
+    | fzf --height 50% --border -m --ansi --nth 2..,.. --preview 'git-fzf-files-preview {-1}' \
+    | cut -c4- \
+    | sed 's/.* -> //'

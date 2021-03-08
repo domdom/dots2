@@ -1,0 +1,6 @@
+#!/bin/sh
+git rev-parse HEAD > /dev/null 2>&1 || exit 1
+
+git l --graph --color=always \
+    | fzf --height 50% --border --ansi --no-sort --reverse -m --preview "git-fzf-commits-preview {}" \
+    | grep -o "[a-f0-9]\{7,\}"

@@ -1,0 +1,22 @@
+#!/bin/sh
+
+if [ -d "$1" ]; then
+    tree -aC "$1"
+    exit
+fi
+
+if [ ! -s "$1" ]; then
+    echo empty file
+    exit
+fi
+
+
+pager=$(git config core.pager)
+pager=${pager:-cat}
+
+if git ls-files --error-unmatch -- "$1" 2>/dev/null; then
+    { git diff --staged -- "$1"; git diff -- "$1"; } | $pager
+else
+    git diff -- /dev/null "$1" | "$pager"
+fi
+
