@@ -7,7 +7,14 @@ endif
 call plug#begin(stdpath('data') . '/plugged')
 
 Plug 'neoclide/coc.nvim'
+
 Plug 'mhinz/vim-signify'
+
+" Language Sytaxes
+Plug 'rhysd/vim-llvm'     " llvm
+Plug 'dag/vim-fish'       " fish
+Plug 'LnL7/vim-nix'       " nix
+Plug 'modille/groovy.vim' " groovy/jenkins
 
 call plug#end()
 " =======================================
@@ -50,15 +57,11 @@ set wildignore+=*.o
 set ttyfast
 
 " =======================================
-" Theme
+" Theme (using default theme)
 " =======================================
 syntax enable
-if exists('+termguicolors')
-    set termguicolors
-endif
 
-" colorscheme one
-set background=light
+highlight CursorLine ctermbg=LightGray cterm=NONE
 
 " =======================================
 " Airline
