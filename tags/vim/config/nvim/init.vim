@@ -9,6 +9,7 @@ call plug#begin(stdpath('data') . '/plugged')
 Plug 'neoclide/coc.nvim'
 
 Plug 'mhinz/vim-signify'
+Plug 'tpope/vim-fugitive' " Git support in vim
 
 " Language Sytaxes
 Plug 'rhysd/vim-llvm'     " llvm
@@ -62,6 +63,15 @@ set ttyfast
 syntax enable
 
 highlight CursorLine ctermbg=LightGray cterm=NONE
+highlight LineNr ctermfg=Gray
+highlight CursorLineNr ctermfg=Black
+
+highlight DiffAdd ctermbg=LightGreen
+highlight DiffDelete ctermbg=Red ctermfg=Black
+highlight DiffChange ctermbg=Yellow ctermfg=Black
+
+highlight clear SignColumn
+
 
 " =======================================
 " Airline
@@ -227,9 +237,6 @@ if has("autocmd")
     au BufRead,BufNewFile * set formatoptions-=cro
 
     au BufNewFile,BufReadPost */bugs/* let b:tagbar_ignore = 1
-
-    " Allow clipboard to persist after vim closes
-    au VimLeave * call system("to_clipboard", getreg('+'))
 
     autocmd FileType json setlocal shiftwidth=2 tabstop=2
 
