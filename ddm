@@ -186,6 +186,8 @@ sync_up () {
             local destFile=$(get_dest_path "$pkgDir" "$dstDir" "$pkgFile")
             local destFileDir=$(dirname "$destFile")
 
+            remove_dead_siblings "$destFileDir"
+
             local maybePkgFile=$(get_linked "$destFile")
 
             debug "pkgFile = $pkgFile"
@@ -225,12 +227,15 @@ sync_dn () {
     # installing packages are still on the path when we go to remove
     # dependencies.
     PATH=$pkgDir/local/bin:$PATH
+
     # for each file in pkgDir
     find "$pkgDir" -not -type d -print0 | \
         while IFS= read -r -d '' pkgFile; do
 
             local destFile=$(get_dest_path "$pkgDir" "$dstDir" "$pkgFile")
             local destFileDir=$(dirname "$destFile")
+
+            remove_dead_siblings "$destFileDir"
 
             local maybePkgFile=$(get_linked "$destFile")
 
@@ -240,7 +245,6 @@ sync_dn () {
             fi
 
             # TODO: remove empty directories
-            # TODO: remove dead siblings
         done
 }
 
@@ -279,6 +283,16 @@ dir_contains () {
 
         file=$(dirname "$file")
     done
+}
+
+remove_dead_siblings() {
+    local destFileDir=$1
+
+    find "$destFileDir" -maxdepth 1 -xtype l -print0 | \
+        while IFS= read -r -d '' deadLink; do
+            print_unstow "$deadLink"
+            $DRY_RUN || rm "$deadLink"
+        done
 }
 
 #### Utils
