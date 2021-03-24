@@ -47,7 +47,7 @@ main () {
         exit 1
     fi
 
-    if [ ! -z "$fallbackHost" ]; then
+    if [ ! -z "$fallbackHost" -a -e "$fallbackHost" ]; then
         if ! is_same "$host" "$fallbackHost"; then
             if [ "$op" == "dn" ]; then
                 error "Host $host, is not installed right now. $fallbackHost is."
@@ -71,7 +71,7 @@ ddm () {
         local hostLinkDir=$(dirname "$CFG_HOST_LINK")
         $DRY_RUN || [ ! -e "$CFG_HOST_LINK" ] || rm "$CFG_HOST_LINK"
         $DRY_RUN || mkdir -p "$hostLinkDir"
-        $DRY_RUN || ln -s "$(relpath "$host" "$hostLinkDir")" "$CFG_HOST_LINK"
+        $DRY_RUN || ln -sf "$(relpath "$host" "$hostLinkDir")" "$CFG_HOST_LINK"
         verbose "host $(basename $host) $UI_TICK"
     else
         $DRY_RUN || rm "$CFG_HOST_LINK"
@@ -119,7 +119,7 @@ sync_tags() {
 
     for tag in $removed; do
         verbose "tag $tag $UI_CROSS "
-        sync_dn "$tag_dir/$tag" "$HOME"
+        sync_dn "$tag_dir/$tag"
         if [ -L "$CFG_TAG_DIR/$tag" ]; then
             debug "rm $CFG_TAG_DIR/$tag"
             $DRY_RUN || rm "$CFG_TAG_DIR/$tag"
@@ -130,7 +130,7 @@ sync_tags() {
 
     for tag in $added; do
         verbose "tag $tag $UI_TICK"
-        sync_up "$tag_dir/$tag" "$HOME"
+        sync_up "$tag_dir/$tag"
     done
 
     if [ "$old_tags" = "$current_tags" ]; then
@@ -192,11 +192,10 @@ find_dead_links() {
 # This function implements the dot-file stowing
 sync_up () {
     local pkgDir=$1
-    local dstDir=$2
 
     # for each file in pkgDir
     while IFS= read -r -d '' pkgFile; do
-        local destFile=$(get_dest_path "$pkgDir" "$dstDir" "$pkgFile")
+        local destFile=$(get_dest_path "$pkgDir" "$pkgFile")
         local destFileDir=$(dirname "$destFile")
 
         record_seen_dir "$destFileDir"
@@ -235,7 +234,6 @@ sync_up () {
 
 sync_dn () {
     local pkgDir=$1
-    local dstDir=$2
 
     # Store the package's local/bin in the path, so that binaries related to
     # installing packages are still on the path when we go to remove
@@ -244,7 +242,7 @@ sync_dn () {
 
     # for each file in pkgDir
     while IFS= read -r -d '' pkgFile; do
-        local destFile=$(get_dest_path "$pkgDir" "$dstDir" "$pkgFile")
+        local destFile=$(get_dest_path "$pkgDir" "$pkgFile")
         local destFileDir=$(dirname "$destFile")
 
         record_seen_dir "$destFileDir"
@@ -263,15 +261,14 @@ sync_dn () {
 # Get what should be the destination path for a pkgFile
 get_dest_path () {
     local pkgDir=$1
-    local dstDir=$2
-    local pkgFile=$3
+    local pkgFile=$2
 
     # Using parameter substitution here is much faster than using 'relpath' but
     # should be safe give how we use find to find all files in pkgDir
     local destFile=${pkgFile#$pkgDir/}
     debug "pkgDir = $1"
     debug "destFile = $destFile"
-    echo "$dstDir/.$destFile"
+    echo "$HOME/.$destFile"
 }
 
 # Reads a symbolic link
@@ -352,11 +349,7 @@ is_same() {
 # join two paths together. If the second part is an absolute path, it will
 # replace the result with that
 join () {
-    if [ ${2::1} = "/" ] ; then
-        echo $2;
-    else
-        echo "${1%/}/$2";
-    fi
+    [ ${2::1} = "/" ] && echo "$2" || echo "${1%/}/$2"
 }
 
 
