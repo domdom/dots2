@@ -63,7 +63,7 @@ main () {
 
 ddm () {
     local op=$1
-    local host=$2
+    local host=${2%%/}
 
     if [ "$op" = up ]; then
         local hostLinkDir=$(dirname "$CFG_HOST_LINK")
