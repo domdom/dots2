@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 case "$1" in
-    delta)  echo git-delta; ;;
+    skim)   echo sk; ;;
     *)      echo $1; ;;
 esac
 
