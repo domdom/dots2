@@ -1,5 +1,3 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
-pkg=$1
-
-nix-env -e $pkg
+nix-env -e "$(pkg-map "$1")"
