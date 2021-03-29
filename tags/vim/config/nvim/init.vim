@@ -6,6 +6,10 @@ endif
 
 call plug#begin(stdpath('data') . '/plugged')
 
+" fzf for vim!
+Plug 'junegunn/fzf.vim'
+Plug 'junegunn/fzf'
+
 Plug 'neoclide/coc.nvim'
 
 Plug 'mhinz/vim-signify'
@@ -70,7 +74,7 @@ highlight DiffAdd ctermbg=LightGreen
 highlight DiffDelete ctermbg=Red ctermfg=Black
 highlight DiffChange ctermbg=Yellow ctermfg=Black
 
-highlight clear SignColumn
+highlight SignColumn ctermfg=White
 
 
 " =======================================
@@ -202,8 +206,6 @@ set t_vb=
 set clipboard^=unnamed,unnamedplus
 vmap <LeftRelease> "*ygv
 
-nnoremap <silent> glk :call LanguageClient#textDocument_hover()<CR>
-nnoremap <silent> gld :call LanguageClient#textDocument_definition()<CR>
 " =======================================
 " Autocmd
 " =======================================
@@ -213,9 +215,6 @@ if has("autocmd")
     " reopening a file
     au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
                 \| exe "normal! g'\"" | endif
-
-    " Custom file type to test language server
-    au BufNewFile,BufRead *.dom set filetype=dom
 
     " .def files are often cpp files in clang
     au BufNewFile,BufRead *.{def,inc} set filetype=cpp
@@ -240,7 +239,8 @@ if has("autocmd")
 
     autocmd FileType json setlocal shiftwidth=2 tabstop=2
 
-    au VimEnter * echo '>^.^<'
+    au VimEnter * echo '>^.^<' |
+        \ highlight clear SignColumn
 endif
 
 hi default CocErrorUnderline    cterm=underline gui=undercurl guisp=#ff0000
