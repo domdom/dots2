@@ -1,7 +1,8 @@
 #!/bin/sh
 
 case "$1" in
-    git-delta) echo delta; ;;
-    *)         echo "$1"; ;;
+    git-delta)  echo delta; ;;
+    grep)       echo gnugrep; ;;
+    *)          echo "$1"; ;;
 esac
 
