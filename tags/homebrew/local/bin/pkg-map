@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 case "$1" in
     skim)   echo sk; ;;
-    *)      echo $1; ;;
+    *)      echo "$1"; ;;
 esac
 

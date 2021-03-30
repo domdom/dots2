@@ -1,5 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 pkg=$(pkg-map "$1")
 
-brew list "$pkg" 2>/dev/null || brew install "$pkg"
+if brew list "$pkg" 2>/dev/null; then
+    brew link "$pkg"
+else
+    brew install "$pkg"
+fi
