@@ -193,6 +193,10 @@ find_dead_links() {
 sync_up () {
     local pkgDir=$1
 
+    # Store the package's local/bin in the path, so that binaries related to
+    # installing packages become available straight away.
+    PATH=$pkgDir/local/bin:$PATH
+
     # for each file in pkgDir
     while IFS= read -r -d '' pkgFile; do
         local destFile=$(get_dest_path "$pkgDir" "$pkgFile")
