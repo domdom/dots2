@@ -21,6 +21,9 @@ Plug 'dag/vim-fish'       " fish
 Plug 'LnL7/vim-nix'       " nix
 Plug 'modille/groovy.vim' " groovy/jenkins
 
+Plug 'morhetz/gruvbox'
+Plug 'rakr/vim-one'
+
 call plug#end()
 " =======================================
 " Plugin Config
@@ -65,6 +68,8 @@ set ttyfast
 " Theme (using default theme)
 " =======================================
 syntax enable
+
+" set termguicolors
 
 highlight CursorLine ctermbg=LightGray cterm=NONE
 highlight LineNr ctermfg=Gray
@@ -151,21 +156,6 @@ command! -bang -nargs=* Fzfiles
             \           : fzf#vim#with_preview('right:50%', '?'),
             \   <bang>0)
 
-" Customize fzf colors to match your color scheme
-let g:fzf_colors =
-\ { 'fg':      ['fg', 'Normal'],
-  \ 'bg':      ['bg', 'Normal'],
-  \ 'hl':      ['fg', 'Comment'],
-  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
-  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
-  \ 'hl+':     ['fg', 'Statement'],
-  \ 'info':    ['fg', 'PreProc'],
-  \ 'border':  ['fg', 'Ignore'],
-  \ 'prompt':  ['fg', 'Conditional'],
-  \ 'pointer': ['fg', 'Exception'],
-  \ 'marker':  ['fg', 'Keyword'],
-  \ 'spinner': ['fg', 'Label'],
-  \ 'header':  ['fg', 'Comment'] }
 
 autocmd! FileType fzf
 autocmd  FileType fzf set laststatus=0 noshowmode noruler
@@ -240,7 +230,7 @@ if has("autocmd")
     autocmd FileType json setlocal shiftwidth=2 tabstop=2
 
     au VimEnter * echo '>^.^<' |
-        \ highlight clear SignColumn
+                \ highlight clear SignColumn
 endif
 
 hi default CocErrorUnderline    cterm=underline gui=undercurl guisp=#ff0000
