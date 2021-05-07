@@ -7,6 +7,7 @@ set -euo pipefail
 #  ~/.config/ddm/host -> ~/dotfiles/hosts/my-host symlink storing last installed host
 
 UI_TICK="$(tput setaf 2)✓$(tput sgr0)"
+UI_EQUAL="$(tput setaf 3)=$(tput sgr0)"
 UI_CROSS="$(tput setaf 1)✕$(tput sgr0)"
 
 LOG_LEVEL=1
@@ -47,7 +48,8 @@ main () {
         exit 1
     fi
 
-    if [ ! -z "$fallbackHost" -a -e "$fallbackHost" ]; then
+    # Maybe get rid of previous host if required
+    if [ -n "$fallbackHost" ] && [ -e "$fallbackHost" ]; then
         if ! is_same "$host" "$fallbackHost"; then
             if [ "$op" == "dn" ]; then
                 error "Host $host, is not installed right now. $fallbackHost is."
@@ -72,15 +74,15 @@ ddm () {
         $DRY_RUN || [ ! -e "$CFG_HOST_LINK" ] || rm "$CFG_HOST_LINK"
         $DRY_RUN || mkdir -p "$hostLinkDir"
         $DRY_RUN || ln -sf "$(relpath "$host" "$hostLinkDir")" "$CFG_HOST_LINK"
-        verbose "host $(basename $host) $UI_TICK"
+        verbose "host $(basename "$host") $UI_TICK"
     else
         $DRY_RUN || rm "$CFG_HOST_LINK"
-        verbose "host $(basename $host) $UI_CROSS"
+        verbose "host $(basename "$host") $UI_CROSS"
     fi
 
     local tag_dir="$host/../../tags"
     local old_tags=$(get_tags)
-    sync_$op "$host" "$HOME"
+    sync_"$op" "$host" "$HOME"
     sync_tags "$tag_dir" "$(get_tags_removed "$old_tags")"
 
     # After all the tags are installed, we then try installing all the
@@ -107,6 +109,12 @@ get_tags_removed() {
 
 get_tags_added() {
     comm -13 <(echo "$1") <(get_tags)
+}
+
+# Read null dilimited items
+read0_item () {
+    local -n store=$1
+    IFS= read -r -d '' store
 }
 
 # computes fixed point for tags
@@ -142,14 +150,14 @@ sync_tags() {
 #################################################
 
 get_deps() {
-    [ ! -e "$CFG_DEP_DIR" ] || find "$CFG_DEP_DIR" -not -name \*.installed -not -type d -exec test -e {} \; -print \
-        | xargs -I{} basename {} \
+    [ ! -e "$CFG_DEP_DIR" ] || find "$CFG_DEP_DIR" -not -name \*.installed -not -type d -exec test -e {} \; -print0 \
+        | xargs -0 -I{} basename {} \
         | sort -u
 }
 
 get_deps_installed() {
-    [ ! -e "$CFG_DEP_DIR" ] || find "$CFG_DEP_DIR"      -name \*.installed -not -type d -exec test -e {} \; -print \
-        | xargs -I{} basename {} \
+    [ ! -e "$CFG_DEP_DIR" ] || find "$CFG_DEP_DIR"      -name \*.installed -not -type d -exec test -e {} \; -print0 \
+        | xargs -0 -I{} basename {} \
         | sed -e 's/\.installed$//' \
         | sort -u
 }
@@ -186,7 +194,6 @@ find_pkg_files() {
 
 find_dead_links() {
     [ ! -e "$1" ] || find "$1" -maxdepth 1 -not -type d -exec test ! -e {} \; -print0
-
 }
 
 # This function implements the dot-file stowing
@@ -198,7 +205,7 @@ sync_up () {
     PATH=$pkgDir/local/bin:$PATH
 
     # for each file in pkgDir
-    while IFS= read -r -d '' pkgFile; do
+    while read0_item pkgFile; do
         local destFile=$(get_dest_path "$pkgDir" "$pkgFile")
         local destFileDir=$(dirname "$destFile")
 
@@ -212,7 +219,7 @@ sync_up () {
 
         if is_same "$pkgFile" "$maybePkgFile"; then
             debug "$pkgFile already linked to $destFile; skipping"
-            # print_stow "$destFile"
+            # print_same "$destFile"
             continue
         fi
 
@@ -245,7 +252,7 @@ sync_dn () {
     PATH=$pkgDir/local/bin:$PATH
 
     # for each file in pkgDir
-    while IFS= read -r -d '' pkgFile; do
+    while read0_item pkgFile; do
         local destFile=$(get_dest_path "$pkgDir" "$pkgFile")
         local destFileDir=$(dirname "$destFile")
 
@@ -292,7 +299,8 @@ dir_contains () {
         [ -z "$file" ] && return 1
         is_same "$dir" "$file" && return 0
 
-        [ "$file" = "." -o "$file" = "/" ] && return 1
+        [ "$file" = "." ] && return 1
+        [ "$file" = "/" ] && return 1
 
         file=$(dirname "$file")
     done
@@ -309,7 +317,8 @@ record_seen_dir() {
 
         seenDirs+=([$file]=true)
 
-        [ "$file" = "." -o "$file" = "/" ] && return
+        [ "$file" = "." ] && return
+        [ "$file" = "/" ] && return
 
         file=$(dirname "$file")
     done
@@ -318,7 +327,7 @@ record_seen_dir() {
 clean_seen_dirs() {
     local printed=""
     for dir in "${!seenDirs[@]}"; do
-        while IFS= read -r -d '' deadLink; do
+        while read0_item deadLink; do
             [[ -z "$printed" ]] && verbose "???"
             printed=yes
 
@@ -367,7 +376,7 @@ remove_file_and_parents() {
 # join two paths together. If the second part is an absolute path, it will
 # replace the result with that
 join () {
-    [ ${2::1} = "/" ] && echo "$2" || echo "${1%/}/$2"
+    [ "${2::1}" = "/" ] && echo "$2" || echo "${1%/}/$2"
 }
 
 
@@ -377,6 +386,9 @@ relpath () {
     python -c 'import os, sys; print(os.path.relpath(*sys.argv[1:]))' "$1" "$2"
 }
 
+print_same () {
+    verbose " $UI_EQUAL ~/${1#$HOME/}"
+}
 print_stow () {
     verbose " $UI_TICK ~/${1#$HOME/}"
 }
