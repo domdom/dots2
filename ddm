@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+set +h
 
 # Special locations:
 #  ~/.config/tags/*    regular files indication which tags to install
