@@ -93,7 +93,6 @@ ddm () {
 #################################################
 
 # Get the current tags present in $CFG_TAG_DIR
-# TODO: Allow duplicate tags somehow, or mandate tags do it themselves?
 get_tags() {
     [ ! -e "$CFG_TAG_DIR" ] || find "$CFG_TAG_DIR" -not -type d -exec test -e {} \; -print | xargs -I{} basename {} | sort -u
 }
@@ -281,6 +280,14 @@ get_dest_path () {
     # Using parameter substitution here is much faster than using 'relpath' but
     # should be safe give how we use find to find all files in pkgDir
     local destFile=${pkgFile#$pkgDir/}
+
+    local pkgName=$(basename "$pkgDir")
+
+    # Substitute ~/.config/tags/ with ~/.config/tags/$pkgName to ensure that we
+    # never get conflicts with stowed tags or dependencies
+    destFile=${destFile/#config\/tags\//config\/tags\/$pkgName\/}
+    destFile=${destFile/#config\/deps\//config\/deps\/$pkgName\/}
+
     debug "pkgDir = $1"
     debug "destFile = $destFile"
     echo "$HOME/.$destFile"
