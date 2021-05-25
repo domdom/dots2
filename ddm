@@ -62,6 +62,10 @@ main () {
 
     ddm "$op" "$host"
 
+    # After all the tags are installed, we then try installing all the
+    # dependencies
+    sync_deps
+
     clean_seen_dirs
 }
 
@@ -84,12 +88,6 @@ ddm () {
     local old_tags=$(get_tags)
     sync_"$op" "$host" "$HOME"
     sync_tags "$tag_dir" "$(get_tags_removed "$old_tags")"
-
-    # After all the tags are installed, we then try installing all the
-    # depenedncies
-    # TODO: fallback if we don't have pkg-install and pkg-remove
-    # TODO: use hooks for tags and dependencies?
-    sync_deps
 }
 
 #################################################
@@ -111,7 +109,7 @@ get_tags_added() {
     comm -13 <(echo "$1") <(get_tags)
 }
 
-# Read null dilimited items
+# Read null delimited items
 read0_item () {
     local -n store=$1
     IFS= read -r -d '' store
@@ -168,19 +166,27 @@ sync_deps() {
     local current_deps=$(get_deps)
     local installed_deps=$(get_deps_installed)
 
-    comm -23 <(echo "$current_deps") <(echo "$installed_deps") | \
-        while read -r dep; do
-            [ -z "$dep" ] && continue
-            verbose "pkg $dep $UI_TICK "
-            $DRY_RUN || pkg-install "$dep" && touch "$CFG_DEP_DIR/$dep.installed"
-        done
+    if ! command -v pkg-install &> /dev/null; then
+        debug "$UI_CROSS no pkg-install, ignoring to be installed dependencies"
+    else
+        comm -23 <(echo "$current_deps") <(echo "$installed_deps") | \
+            while read -r dep; do
+                [ -z "$dep" ] && continue
+                verbose "pkg $dep $UI_TICK "
+                $DRY_RUN || pkg-install "$dep" && touch "$CFG_DEP_DIR/$dep.installed"
+            done
+    fi
 
-    comm -13 <(echo "$current_deps") <(echo "$installed_deps") | \
-        while read -r dep; do
-            [ -z "$dep" ] && continue
-            verbose "pkg $dep $UI_CROSS "
-            $DRY_RUN || pkg-remove "$dep" && rm "$CFG_DEP_DIR/$dep.installed"
-        done
+    if ! command -v pkg-remove &> /dev/null; then
+        debug "$UI_CROSS no pkg-remove, ignoring to be removed dependencies"
+    else
+        comm -13 <(echo "$current_deps") <(echo "$installed_deps") | \
+            while read -r dep; do
+                [ -z "$dep" ] && continue
+                verbose "pkg $dep $UI_CROSS "
+                $DRY_RUN || pkg-remove "$dep" && rm "$CFG_DEP_DIR/$dep.installed";
+            done
+    fi
 }
 
 

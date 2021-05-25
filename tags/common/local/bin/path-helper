@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is inspired by OSX's /usr/libexec/path_helper
 # It iterates over all files in ~/.config/paths.d/ and outputs something
-# that can be evaled by any shell to modify the PATH
+# that can be eval'd by any shell to modify the PATH
 #
 # usage: eval (path-helper fish)
 # usage: eval $(path-helper bash)
@@ -17,7 +17,7 @@ for path_file in "$@"; do
     # shellcheck disable=SC2016
     case "$lang" in
         sh|bash|dash|zsh) sed -e 's/^.*$/export PATH=&:"$PATH"/' "$path_file"; ;;
-        fish) 	          sed -e 's/^.*$/set -g PATH "&" $PATH/' "$path_file"; ;;
+        fish)             sed -e 's/^.*$/set -g PATH "&" $PATH/' "$path_file"; ;;
     esac
 done
 

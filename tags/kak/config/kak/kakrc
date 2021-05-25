@@ -43,11 +43,11 @@ plug "alexherbo2/connect.kak" config %{
 }
 
 
-eval %sh{kak-lsp --kakoune -s $kak_session}
-set global lsp_cmd "kak-lsp -s %val{session} -vvv --log /home/domferre/kak-lsp.log"
-hook global WinSetOption filetype=(c|cpp) %{
-    lsp-enable-window
-}
+#eval %sh{kak-lsp --kakoune -s $kak_session}
+#set global lsp_cmd "kak-lsp -s %val{session} -vvv --log /home/domferre/kak-lsp.log"
+#hook global WinSetOption filetype=(c|cpp) %{
+#    lsp-enable-window
+#}
 
 #map global normal p '<a-O>kp'
 #map global user s ': source "%val{config}/kakrc"<ret>'

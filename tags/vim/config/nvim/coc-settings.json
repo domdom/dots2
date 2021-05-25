@@ -1,2 +1,27 @@
 {
+  "diagnostic.separateRelatedInformationAsDiagnostics": true,
+  "languageserver": {
+   "parfait-lsp": {
+      "command": "parfait-lsp",
+      "args": ["-v", "--diagnostics-on-change", "--parfait", "-W", "-I", "-p", "-e", "all"],
+      "filetypes": ["c", "cpp", "objc", "objcpp"],
+      "rootPatterns": ["compile_commands.json", "build/compile_commands.json", "build-Release/compile_commands.json", ".vim/", ".git/", ".hg/"],
+      "trace.server": "verbose",
+      "trace.client": "verbose",
+      "initializationOptions": { 
+      }
+    },
+    /*
+    "clangd": {
+      "enabled": false,
+      "command": "clangd",
+      "args": [ ],
+      "filetypes": ["c", "cpp", "objc", "objcpp"],
+      "rootPatterns": ["compile_commands.json"],
+      "initializationOptions": { },
+      "trace.server": "verbose",
+      "trace.client": "verbose"
+    }
+    */
+  }
 }
