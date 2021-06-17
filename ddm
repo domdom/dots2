@@ -67,7 +67,7 @@ main () {
     # dependencies
     sync_deps
 
-    clean_seen_dirs
+    clean_seen_dirs &
 }
 
 ddm () {
