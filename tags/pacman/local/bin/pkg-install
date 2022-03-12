@@ -1,0 +1,5 @@
+#!/bin/sh
+
+pkg=$(pkg-map "$1")
+
+sudo pacman --noconfirm -S "$pkg"
