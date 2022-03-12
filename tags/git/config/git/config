@@ -25,10 +25,10 @@
   default = "current"
 
 [includeIf "gitdir:~/work/**"]
-  path = "~/work/.gitconfig"
+  path = "~/.config/git/config-work"
 
 [includeIf "gitdir:~/personal/**"]
-  path = "~/personal/.gitconfig"
+  path = "~/.config/git/config-personal"
 
 ; plugin settings
 [absorb]
