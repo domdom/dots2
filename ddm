@@ -245,7 +245,7 @@ sync_up () {
         local relPath=$(relpath "$pkgFile" "$destFileDir")
 
         print_stow "$destFile"
-        $DRY_RUN || ln -s "$relPath" "$destFile"
+        $DRY_RUN || ln -sf "$relPath" "$destFile"
     done < <(find_pkg_files "$pkgDir")
 }
 
