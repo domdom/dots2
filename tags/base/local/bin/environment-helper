@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# This script is inspired by the way that systemd's ~/.config/environment.d/*.conf files work
+# usage: eval (environment-helper fish)
+# usage: eval $(environment-helper bash)
+
+lang=${1-sh}
+
+# This preemble unifies the implementation of the code below
+# In a clean environment, there are still some exported variables, so collect those to filter out
+baseline=`env`
+
+# execute the impl with a clean environment
+~/.local/bin/impl-environment-helper | grep -v -F "$baseline" | \
+    grep -v 'SHLVL' | \
+    sed -e 's/"/\\"/' | \
+    case "$lang" in
+        sh|bash|dash|zsh) sed -e 's/^\(.*\)=\(.*\)$/export \1="\2"/'; ;;
+        fish)             sed -e 's/^\(.*\)=\(.*\)$/set -gx \1 "\2";/'; ;;
+    esac
+

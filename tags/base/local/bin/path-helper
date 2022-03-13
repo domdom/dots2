@@ -16,8 +16,8 @@ for path_file in "$@"; do
     # We want $ to remain unexpanded
     # shellcheck disable=SC2016
     case "$lang" in
-        sh|bash|dash|zsh) sed -e 's/^.*$/export PATH=&:"$PATH"/' "$path_file"; ;;
-        fish)             sed -e 's/^.*$/set -g PATH "&" $PATH/' "$path_file"; ;;
+        sh|bash|dash|zsh) sed -e 's/^.*$/export  PATH=&:"$PATH"/' "$path_file"; ;;
+        fish)             sed -e 's/^.*$/set -gx PATH "&" $PATH/' "$path_file"; ;;
     esac
 done
 

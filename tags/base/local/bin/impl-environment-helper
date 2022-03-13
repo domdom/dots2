@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# This file should be called with a clean environment (env -i)
+for env_file in ~/.config/environment.d/*; do
+    [ -e "$env_file" ] || continue
+    set -a
+    source "$env_file"
+    set +a
+done
+
+env
