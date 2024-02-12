@@ -1,6 +1,6 @@
 [delta]
   light = true
-  syntax-theme = "Github"
+  syntax-theme = "GitHub"
   features = line-numbers
 
 [core]
