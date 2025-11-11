@@ -1,39 +1,99 @@
 [alias]
-  amend = "commit --amend"
-  co = "commit"
-  d = "diff"
-  ds = "diff --staged"
-  f = "fetch --prune"
-  fa = "fetch --all --prune"
-  fush = "push --force-with-lease"
-  l = "!git log --graph --source --format=tformat:'%C(bold blue)%h%C(yellow):%Creset%s %C(green)%an%Creset%C(dim white) (%ar)%C(auto)%n%-d%Creset' --date-order"
-  la = "!git l --all"
-  lr = "!git l HEAD master origin/master --branches=release-\\* --branches=origin/release-\\*"
-  out = "log --graph HEAD --remotes=origin/(master|release-*) --format=tformat:'%C(cyan)%h%Creset%C(dim white):%Creset%<(90,trunc)%s %C(dim white)%<(17,trunc)%an%Creset %C(green)%cd%C(auto)%n%-D%Creset'"
-  r = "rebase -i --autostash --autosquash"
-  ref = "add -u"
-  s = "status --short"
-  st = "status"
-  up = "pull --rebase --autostash"
-  v = "log --graph --source --stat --format=format:'%w(0,0,1)%C(cyan)%H%Creset%C(auto)%d%Creset%n%n%C(yellow)%cD%Creset %C(green)(%cr)%Creset%n%C(yellow)%an %C(dim white)<%ae>%n%n%Creset%s%n%n%-b%n'"
-  va = "!git v --all"
+    root = rev-parse --show-toplevel
+    s = status --short
+    st = status
+
+    amend = commit --amend
+    dmend = "!f() { git reset --soft HEAD^ && git reset -p $@ && git commit -C ORIG_HEAD; }; f"
+
+    wip = commit -m wip
+    d = diff
+    ds = diff --staged
+    fush = push --force-with-lease --set-upstream origin
+
+    f = fetch origin --prune
+
+    # Logging
+    l    = !git log --graph --source --decorate-refs-exclude=refs/remotes/backup --format=tformat:'%C(bold blue)%h%C(yellow):%Creset%s %C(green)%an%Creset%C(dim normal) (%cr)%C(auto)%n%-d%Creset' --date-order
+    la   = !git l --all
+    ld   = !git l --branches=dom
+    lr   = !git l HEAD master origin/master --branches=release-\\* --branches=origin/release-\\*
+
+    lsummary = !git log --source --decorate-refs-exclude=refs/remotes/backup --format=tformat:'%s' --date-order
+
+    out = "log --graph HEAD --remotes=origin/(master|release-*) --format=tformat:'%C(cyan)%h%Creset%C(dim white):%Creset%<(90,trunc)%s %C(dim white)%<(17,trunc)%an%Creset %C(green)%cd%C(auto)%n%-D%Creset'"
+    r = "rebase --interactive --autostash --autosquash --update-refs"
+    ref = "add -u"
+    v = "log --graph --source --stat --format=format:'%w(0,0,1)%C(cyan)%H%Creset%C(auto)%d%Creset%n%n%C(yellow)%cD%Creset %C(green)(%cr)%Creset%n%C(yellow)%an %C(dim normal)<%ae>%n%n%Creset%s%n%n%-b%n'"
+    va = "!git v --all"
+
+    move-impl = !git rebase --autostash --onto $1 $2 $3 && git target $1 && :
+    move = !git move-impl $1 $(git merge-base "origin/"$(git target) HEAD) $(git branch --show-current)
+
+# Aliases from Curtis :)
+# trunk = config --local core.trunk
+# target = !git config --local branch.$(git branch --show-current).target
+# targetof = !git config --local branch.$1.target && :
+# targetoftarget = !git config --local branch.$(git target).target
+
+# out2 = l @{u}..
+# Checkout new branch $1, at commit ${2:-$(git trunk)}
+# bn = !git checkout -b $1 ${2:-$(git trunk)} && git target ${2:-$(git trunk)} && :
+# lg = log --graph --oneline --date-order --decorate
+# lg = log --graph --oneline --date-order --decorate --pretty
+# lg = log --graph --oneline --date-order --decorate
+# dmend2 = "!f() { git reset --soft HEAD^ && git reset -p $@ && git commit -C ORIG_HEAD; }; f"
+#   stack = !git twig $1 $(git branch --show-current) && :
+#   comms = !git log --oneline $(git target)..head
+#   bump = !git fetch -p && git rebase --autostash --autosquash --interactive $(git target)
+#   fix = !git comms && read -p 'Commit hash to fix: ' hash && git commit --fixup $hash
+#   shove = push --force-with-lease --set-upstream origin head
+#   detach = !git fetch -p && git checkout $(git trunk)
+#   junk = !git fetch -p && git branch --merged $(git trunk)
+#   rings = !git log --oneline --first-parent $(git trunk)
+#   amend = commit --amend --no-edit
+#   checkin = !git add . && git commit -m"\"Checkin on $(git branch --show-current) at $(date +\"%Y-%m-%d %T\")\""
+#   continue = "!if [[ \"$(git log -1 --pretty=%B)\" =~ ^Checkin ]]; then git reset --mixed head~; else echo 'Not on a checkin commit'; fi"
+#   review = !echo "$(git diff $(git target) | wc --lines) lines" && echo "$(git diff $(git target) --name-only | wc --lines) files" && git comms && git diff $(git target)
+#   unstack = "!git fetch -p; if [ ! $(git targetoftarget) ]; then echo 'Not stacked'; elif [ ! $(git branch --merged $(git targetoftarget) $(git target)) ]; then echo \"Cannot unstack, $(git target) is not fully merged into $(git targetoftarget)\"; else git target $(git targetoftarget); git bump; fi"
+#   pr = !git log $(git target)..head --reverse --pretty='%s' | xargs -n1 -d'\n' printf -- '* %s\n'
+#   swing = !git branch && read -p 'Target branch: ' branch && git checkout $branch
+[branch]
+    autoSetupRebase = always
+    sort = -committerdate
 
 [commit]
-  verbose = true
+    verbose = true
 
 [push]
-  default = "current"
+    default = "current"
 
 [includeIf "gitdir:~/work/**"]
-  path = "~/.config/git/config-work"
+    path = "~/.config/git/config-work"
 
 [includeIf "gitdir:~/personal/**"]
-  path = "~/.config/git/config-personal"
+    path = "~/.config/git/config-personal"
 
 ; plugin settings
 [absorb]
-  maxStack = 200
+    maxStack = 200
 
 ; Includes delta configuration, since it breaks git if it's not installed
 [include]
- path = "~/.config/git/config-delta"
+    path = "~/.config/git/config-delta"
+
+[include]
+    path = "~/.config/git/config-proxy"
+
+[init]
+    defaultBranch = main
+
+[showbranch]
+    default = --topo-order
+    default = heads/*
+[checkout]
+    defaultRemote = origin
+[core]
+	commitGraph = true
+[gc]
+	writeCommitGraph = true
