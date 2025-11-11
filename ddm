@@ -48,6 +48,10 @@ main () {
         error "You must specify a host on the first run"
         exit 1
     fi
+    if [ ! -d "$host" ]; then
+        error "Given host is not a directory: $host"
+        exit 1
+    fi
 
     # Maybe get rid of previous host if required
     if [ -n "$fallbackHost" ] && [ -e "$fallbackHost" ]; then
@@ -66,8 +70,6 @@ main () {
     # After all the tags are installed, we then try installing all the
     # dependencies
     sync_deps
-
-    clean_seen_dirs &
 }
 
 ddm () {
@@ -95,13 +97,13 @@ ddm () {
 
 # Get the current tags present in $CFG_TAG_DIR
 get_tags() {
-    [ ! -e "$CFG_TAG_DIR" ] || find "$CFG_TAG_DIR" -not -type d -exec test -e {} \; -print | xargs -I{} basename {} | sort -u
+    [ ! -e "$CFG_TAG_DIR" ] || find "$CFG_TAG_DIR" -not -type d -exec test -e {} \; -print0 | xargs -0 -I{} basename {} | sort -u
 }
 
 get_tags_removed() {
     {
         comm -23 <(echo "$1") <(get_tags)
-        [ ! -e "$CFG_TAG_DIR" ] || find "$CFG_TAG_DIR" -type l -exec test ! -e {} \; -print | xargs -I{} basename {}
+        [ ! -e "$CFG_TAG_DIR" ] || find "$CFG_TAG_DIR" -type l -exec test ! -e {} \; -print0 | xargs -0 -I{} basename {}
     } | sort -u
 }
 
@@ -111,8 +113,8 @@ get_tags_added() {
 
 # Read null delimited items
 read0_item () {
-    local -n store=$1
-    IFS= read -r -d '' store
+    local store=$1
+    IFS= read -r -d '' $store
 }
 
 # computes fixed point for tags
@@ -215,8 +217,6 @@ sync_up () {
         local destFile=$(get_dest_path "$pkgDir" "$pkgFile")
         local destFileDir=$(dirname "$destFile")
 
-        record_seen_dir "$destFileDir"
-
         local maybePkgFile=$(get_linked "$destFile")
 
         debug "pkgFile = $pkgFile"
@@ -261,8 +261,6 @@ sync_dn () {
     while read0_item pkgFile; do
         local destFile=$(get_dest_path "$pkgDir" "$pkgFile")
         local destFileDir=$(dirname "$destFile")
-
-        record_seen_dir "$destFileDir"
 
         local maybePkgFile=$(get_linked "$destFile")
 
@@ -317,37 +315,6 @@ dir_contains () {
         [ "$file" = "/" ] && return 1
 
         file=$(dirname "$file")
-    done
-}
-
-declare -A seenDirs=(["$HOME"]=true)
-record_seen_dir() {
-    local file=$1
-
-    while :; do
-        [ -z "$file" ] && return
-
-        [ ${seenDirs["$file"]+is_set} ] && return
-
-        seenDirs+=([$file]=true)
-
-        [ "$file" = "." ] && return
-        [ "$file" = "/" ] && return
-
-        file=$(dirname "$file")
-    done
-}
-
-clean_seen_dirs() {
-    local printed=""
-    for dir in "${!seenDirs[@]}"; do
-        while read0_item deadLink; do
-            [[ -z "$printed" ]] && verbose "???"
-            printed=yes
-
-            remove_file_and_parents "$deadLink"
-
-        done < <(find_dead_links "$dir")
     done
 }
 
