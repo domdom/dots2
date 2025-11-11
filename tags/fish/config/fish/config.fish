@@ -1,5 +1,5 @@
 # if we haven't sourced the interactive config, do it
-if status --is-interactive
+if status is-interactive
 
     # Abbreviations
     abbr --add --global -- :q 'exit'
@@ -14,6 +14,7 @@ if status --is-interactive
         set_color -o
         echo -n (pwd | sed -e "s|^$HOME|~|")
         set_color normal
+        fish_git_prompt
         echo -n ' $ '
     end
 
