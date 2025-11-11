@@ -8,11 +8,20 @@ lang=${1-sh}
 
 # This preemble unifies the implementation of the code below
 # In a clean environment, there are still some exported variables, so collect those to filter out
-baseline=`env`
+baseline=`env -i \
+    HOME=$HOME \
+    XDG_CONFIG_HOME=$HOME/.config \
+    XDG_CACHE_HOME=$HOME/.cache \
+    XDG_DATA_HOME=$HOME/.local/share \
+    /bin/sh -c env`
 
 # execute the impl with a clean environment
-~/.local/bin/impl-environment-helper | grep -v -F "$baseline" | \
-    grep -v 'SHLVL' | \
+env -i \
+    HOME=$HOME \
+    XDG_CONFIG_HOME=$HOME/.config \
+    XDG_CACHE_HOME=$HOME/.cache \
+    XDG_DATA_HOME=$HOME/.local/share \
+    `which impl-environment-helper` | grep -v -F "$baseline" | \
     sed -e 's/"/\\"/' | \
     case "$lang" in
         sh|bash|dash|zsh) sed -e 's/^\(.*\)=\(.*\)$/export \1="\2"/'; ;;
