@@ -85,6 +85,9 @@ add-highlighter global/ number-lines
 map global normal <backspace> ': bp<ret>'
 map global normal <c-l> ': bn<ret>'
 
+# On macos and iTerm, <shift-space> and <space> are different
+map global insert <s-space> <space>
+
 map global normal <c-p> ': fzf-files<ret>'
 map global normal <c-e> ': fzf-buffers<ret>'
 
