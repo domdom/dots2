@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# First, make sure you have a valid ticket for accessing /parfait-nfs/:
+echo ssh phoenix102966.dev3sub3phx.databasede3phx.oraclevcn.com "kinit -r 90d -l 90d -R"
+     ssh phoenix102966.dev3sub3phx.databasede3phx.oraclevcn.com "kinit -r 90d -l 90d -R"
+
+echo scp domferre@phoenix102966.dev3sub3phx.databasede3phx.oraclevcn.com:$1 ./
+exec scp domferre@phoenix102966.dev3sub3phx.databasede3phx.oraclevcn.com:$1 ./

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+base_dir="${HOME}/work/c";
+notes_dir="${HOME}/personal/Tasks/Dev";
+
+main() {
+    case $1 in
+        new)    shift;  new_workspace "$@"; ;;
+        config) shift;  config_workspace "$@"; ;;
+        *)              find_workspace "$@"; ;;
+    esac
+}
+
+find_workspace() {
+    git -C "$base_dir" worktree list \
+        | grep -v "$base_dir/.base" \
+        | fzf -1 \
+            --height=50% \
+            --reverse \
+            --preview="git -c color.ui=always -C {1} l" \
+            --query "$*" \
+        | sed "s@$base_dir/@@"
+}
+
+config_workspace() {
+    local name=$1;
+
+    mkdir -p "$base_dir/$name/dumps"
+    touch "$notes_dir/$name.md"
+    ln -sf "$notes_dir/$name.md" "$base_dir/$name/notes.md"
+    ln -sf "$base_dir/.base/CMakeUserPresets.json" "$base_dir/$name"
+}
+
+
+new_workspace() {
+    local name=$1;
+    local target=${2:-origin/HEAD}
+
+    git -C "$base_dir" branch "dom/$name" "$target"
+
+    git -C "$base_dir" worktree add "$name" "dom/$name" || exit 1
+
+    config_workspace "$@"
+}
+
+
+# Making a workspace:
+# - create new cremerie clone
+
+main "$@"
