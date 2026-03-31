@@ -3,7 +3,7 @@
   "languageserver": {
    "parfait-lsp": {
       "command": "parfait-lsp",
-      "args": ["-v", "--diagnostics-on-change", "--parfait", "-W", "-I", "-p", "-e", "all"],
+      "args": ["-v", "--parfait", "-W", "-I", "-p", "-e", "all", "-llibparfait-rdbms", "-c", "parfait/test/parfait/bugpass/buffer-overflow/bof.conf" ],
       "filetypes": ["c", "cpp", "objc", "objcpp"],
       "rootPatterns": ["compile_commands.json", "build/compile_commands.json", "build-Release/compile_commands.json", ".vim/", ".git/", ".hg/"],
       "trace.server": "verbose",

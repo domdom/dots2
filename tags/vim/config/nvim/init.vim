@@ -10,7 +10,7 @@ call plug#begin(stdpath('data') . '/plugged')
 Plug 'junegunn/fzf.vim'
 Plug 'junegunn/fzf'
 
-Plug 'neoclide/coc.nvim'
+Plug 'junegunn/vim-easy-align'
 
 Plug 'mhinz/vim-signify'
 Plug 'tpope/vim-fugitive' " Git support in vim
@@ -20,6 +20,8 @@ Plug 'rhysd/vim-llvm'     " llvm
 Plug 'dag/vim-fish'       " fish
 Plug 'LnL7/vim-nix'       " nix
 Plug 'modille/groovy.vim' " groovy/jenkins
+
+Plug 'farmergreg/vim-lastplace' " remember cursor location
 
 Plug 'morhetz/gruvbox'
 Plug 'rakr/vim-one'
@@ -47,6 +49,12 @@ nnoremap <leader>vs :source $MYVIMRC<cr>
 nmap <C-h> :bp<CR>
 nmap <C-l> :bn<CR>
 
+" Vim Easy Align
+" Start interactive EasyAlign in visual mode (e.g. vipga)
+xmap ga <Plug>(EasyAlign)
+" Start interactive EasyAlign for a motion/text object (e.g. gaip)
+nmap ga <Plug>(EasyAlign)
+
 " =======================================
 " Display
 " =======================================
@@ -55,6 +63,7 @@ set ruler
 set title
 set cmdheight=1
 set showtabline=2
+set tabline=%f
 set nowrap
 
 set cursorline
@@ -69,7 +78,7 @@ set ttyfast
 " =======================================
 syntax enable
 
-" set termguicolors
+set termguicolors
 
 highlight CursorLine ctermbg=LightGray cterm=NONE
 highlight LineNr ctermfg=Gray
@@ -81,6 +90,8 @@ highlight DiffChange ctermbg=Yellow ctermfg=Black
 
 highlight SignColumn ctermfg=White
 
+set background=light
+colorscheme one
 
 " =======================================
 " Airline
@@ -119,11 +130,6 @@ endif
 set undodir=~/.cache/vim/undodir
 set undofile
 set directory=/tmp//
-
-" =======================================
-" TagBar
-" =======================================
-nmap <F8> :TagbarToggle<CR>
 
 " =======================================
 " FZF Fuzzy finder
@@ -190,6 +196,8 @@ set foldlevel=2
 set visualbell
 set t_vb=
 
+" Split commandline
+command! -range SplitCommand let old = @/ | s/\s\%(\%([^'"`]*\(['"`]\)[^'"`]*\1\)*[^'"`]*$\)\@=/ \\\r    /g | let @/ = old
 
 " System Clipboard
 " =======================================
@@ -201,11 +209,6 @@ vmap <LeftRelease> "*ygv
 " =======================================
 
 if has("autocmd")
-    " Have Vim jump to the last position when
-    " reopening a file
-    au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
-                \| exe "normal! g'\"" | endif
-
     " .def files are often cpp files in clang
     au BufNewFile,BufRead *.{def,inc} set filetype=cpp
     " For llvm and clang files we want to have tab size of 2 spaces
@@ -222,22 +225,36 @@ if has("autocmd")
     " Jenkins -> groovy
     au BufRead,BufNewFile *.jenkins set filetype=groovy
 
+    " .pdd -> protoddag
+    au BufRead,BufNewFile *.pdd set filetype=protoddag
+
     " Don't auto-add comments on newline
     au BufRead,BufNewFile * set formatoptions-=cro
 
     au BufNewFile,BufReadPost */bugs/* let b:tagbar_ignore = 1
 
     autocmd FileType json setlocal shiftwidth=2 tabstop=2
+    autocmd FileType groovy setlocal shiftwidth=4 tabstop=4
+    autocmd FileType javascript setlocal shiftwidth=4 tabstop=4
+
+    autocmd FileType markdown vmap <leader><Bslash> :EasyAlign*<Bar><Enter>
+
+    autocmd FileType llvm setlocal iskeyword+=.,@-@,%,!
 
     au VimEnter * echo '>^.^<' |
                 \ highlight clear SignColumn
 endif
 
-hi default CocErrorUnderline    cterm=underline gui=undercurl guisp=#ff0000
-hi default CocWarningUnderline  cterm=underline gui=undercurl guisp=#ff922b
-hi default CocInfoUnderline     cterm=underline gui=undercurl guisp=#fab005
-hi default CocHintUnderline     cterm=underline gui=undercurl guisp=#15aabf
-hi default link CocErrorHighlight   CocErrorUnderline
-hi default link CocWarningHighlight CocWarningUnderline
-hi default link CocInfoHighlight    CocInfoUnderline
-hi default link CocHintHighlight    CocHintUnderline
+hi DiagnosticError          guifg=#ff0000
+hi DiagnosticWarn           guifg=#ff922b
+hi DiagnosticInfo           guifg=#fab005
+hi DiagnosticHint           guifg=#15aabf
+hi DiagnosticOk             guifg=Green
+
+hi DiagnosticUnderlineError guisp=#ff0000 cterm=underline gui=undercurl
+hi DiagnosticUnderlineWarn  guisp=#ff922b cterm=underline gui=undercurl
+hi DiagnosticUnderlineInfo  guisp=#fab005 cterm=underline gui=undercurl
+hi DiagnosticUnderlineHint  guisp=#15aabf cterm=underline gui=undercurl
+hi DiagnosticUnderlineOk    guisp=Green   cterm=underline gui=undercurl
+
+lua require('init')
